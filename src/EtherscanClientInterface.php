@@ -22,15 +22,16 @@ interface EtherscanClientInterface
     public function transactions(string $address, AddressHistoryQuery $query = new AddressHistoryQuery()): array;
 
     /**
-     * ERC-20 transfers to or from the address on one token contract in the query's block range (`action=tokentx`). Etherscan does not return the log index of a transfer: use the hash to read the receipt from a node when the exact event matters.
+     * ERC-20 transfers in the query's block range (`action=tokentx`), filtered by the address (to or from), the token contract, or both. Provide at least one of address or contractAddress; null or an empty string counts as not given. Etherscan does not return the log index of a transfer: use the hash to read the receipt from a node when the exact event matters.
      *
      * @return list<TokenTransfer>
      *
      * @throws EtherscanRateLimitException when the API key is over its rate limit
      * @throws EtherscanConfigurationException when the API key is missing or refused
      * @throws EtherscanException on any other API error or a malformed answer
+     * @throws \InvalidArgumentException when neither address nor contractAddress is given
      */
-    public function tokenTransfers(string $address, string $contractAddress, AddressHistoryQuery $query = new AddressHistoryQuery()): array;
+    public function tokenTransfers(?string $address, ?string $contractAddress = null, AddressHistoryQuery $query = new AddressHistoryQuery()): array;
 
     /**
      * Internal transactions (value moved by contract execution) that touch the address in the query's block range (`action=txlistinternal`). These leave no receipt log; their amount and recipient come from Etherscan's traces.

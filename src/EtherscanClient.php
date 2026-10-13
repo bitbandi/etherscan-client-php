@@ -8,6 +8,7 @@ use SensitiveParameter;
 use Amashukov\Etherscan\Vo\InternalTransaction;
 use Amashukov\Etherscan\Vo\TokenTransfer;
 use Amashukov\Etherscan\Vo\Transaction;
+use InvalidArgumentException;
 use JsonException;
 use Psr\Http\Client\ClientExceptionInterface;
 use Psr\Http\Client\ClientInterface;
@@ -36,9 +37,14 @@ final readonly class EtherscanClient implements EtherscanClientInterface
         return array_map(Transaction::fromRow(...), $this->rows('txlist', ['address' => $address], $query));
     }
 
-    public function tokenTransfers(string $address, string $contractAddress, AddressHistoryQuery $query = new AddressHistoryQuery()): array
+    public function tokenTransfers(?string $address, ?string $contractAddress = null, AddressHistoryQuery $query = new AddressHistoryQuery()): array
     {
-        return array_map(TokenTransfer::fromRow(...), $this->rows('tokentx', ['address' => $address, 'contractaddress' => $contractAddress], $query));
+        $filter = array_filter(['address' => $address, 'contractaddress' => $contractAddress], static fn (?string $value): bool => null !== $value && '' !== $value);
+        if ([] === $filter) {
+            throw new InvalidArgumentException('Provide at least one of address or contractaddress.');
+        }
+
+        return array_map(TokenTransfer::fromRow(...), $this->rows('tokentx', $filter, $query));
     }
 
     public function internalTransactions(string $address, AddressHistoryQuery $query = new AddressHistoryQuery()): array
